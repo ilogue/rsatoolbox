@@ -143,12 +143,7 @@ for run in runs:
             roi_mask = rois[subjects.index(run.sub), roi, :]
             data[tag][r, c, :] = betas[roi_mask]
 
-print('Compressing..')
-numpy.savez_compressed(
-    join(out_dir, 'data.npz'),
-    rois=rois,
-    **data,
-)
+print('Saving metadata..')
 with open(join(out_dir, 'meta.json'), 'w') as fhandle:
     json.dump(
         dict(
@@ -174,6 +169,7 @@ ds = Dataset(
         condition=numpy.tile(conditions, N_RUNS)
     )
 )
+print('Saving dataset..')
 ds.save(join(out_dir, 'dataset.h5'), overwrite=True)
 
 runwise_prec_matrix = []
@@ -186,7 +182,8 @@ for r in range(N_RUNS):
             method='shrinkage_diag'
         )
     )
-numpy.save(join(out_dir, 'noise.npy'), runwise_prec_matrix)
+print('Saving noise..')
+numpy.save(join(out_dir, 'noise.npy'), numpy.asarray(runwise_prec_matrix))
 
 # calculate crossnobis RDMs from the patterns and precision matrices
 rdms = calc_rdm(
@@ -197,5 +194,6 @@ rdms = calc_rdm(
     cv_descriptor='run',
 )
 
-rdms.descriptors['noise'] # saves memory
+del rdms.descriptors['noise'] # saves memory
+print('Saving rdms..')
 rdms.save(join(out_dir, 'rdms.h5'), overwrite=True)
